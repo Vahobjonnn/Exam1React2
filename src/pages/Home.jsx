@@ -1,14 +1,6 @@
-import { dataJotai, deleteId, addUser,editUserJotai } from "@/components/todo"
-import { useAtom } from "jotai"
-import React, { useState } from "react"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { deleteUser, editUser ,addUser} from '@/reducers/counter'
+import React, { useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import {
   Dialog,
   DialogClose,
@@ -18,81 +10,73 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
+import { Input } from '@/components/ui/input'
 const Home = () => {
-  const [data, setData] = useAtom(dataJotai)
-  const [, deleteUser] = useAtom(deleteId)
-  const [, userAdd] = useAtom(addUser)
-  const [, userEdit] = useAtom(editUserJotai)
-  const [editUser, setEditUser] = useState({})
-  function handleSubmit(e) {
-    e.preventDefault()
-    let newUser = {
-      id: Date.now(),
-      name: e.target.name.value,
-      job: e.target.job.value,
-    }
-    userAdd(newUser)
-  }
-  return (
-    <div className="p-4">
+  const { data } = useSelector((store) => store.counter)
+  const [editUs, setEditUs] = useState({})
+  const dispatch = useDispatch()
 
+function handleSubmit(e) {
+  e.preventDefault()
+  let newUser={
+    id:Date.now(),
+    name:e.target.name.value,
+    job:e.target.job.value,
+  }
+  dispatch(addUser(newUser))
+}
+
+  return (
+    <>
       <Dialog>
-        <DialogTrigger> <button className="bg-blue-500 p-2 text-white ">AddUSers</button></DialogTrigger>
+        <DialogTrigger><button className='text-white bg-blue-500 ml-10 p-2'>AddUser</button></DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Are you absolutely sure?</DialogTitle>
             <DialogDescription>
-              <form action="" onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <form onSubmit={handleSubmit} className='flex flex-col gap-4 ' action="">
                 <Input name="name" />
                 <Input name="job" />
-                <DialogClose><button type="submit">Submit</button></DialogClose>
+                <DialogClose><button type='submit'>Submit</button></DialogClose>
               </form>
             </DialogDescription>
           </DialogHeader>
         </DialogContent>
       </Dialog>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Job</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
+      <div className='bg-white px-6 py-10'>
+        <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
           {data.map((el) => (
-            <TableRow key={el.id}>
-              <TableCell className="w-[400px]">{el.name}</TableCell>
-              <TableCell className="w-[450px]">{el.job}</TableCell>
-              <TableCell>
-                <button className="bg-red-600 p-2 text-white mr-1" onClick={() => deleteUser(el.id)}>
-                  Delete
-                </button>
+            <div key={el.id} className='flex flex-col gap-6 rounded-2xl shadow-2xl p-6'>
+              <div className='flex flex-col gap-1'>
+                <h2 className='text-lg font-medium text-gray-900'>{el.name}</h2>
+                <p className='text-sm text-gray-500'>{el.job}</p>
+              </div>
+              <div className='flex gap-4 text-sm'>
+                <button className='text-gray-300' onClick={() => dispatch(deleteUser(el.id))} >Delete</button>
                 <Dialog>
-                  <DialogTrigger> <button onClick={() => setEditUser(el)} className="bg-green-500 p-2 text-white ">EditUsers</button></DialogTrigger>
+                  <DialogTrigger><button className='text-black' onClick={() => setEditUs(el)}>Edit</button></DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Are you absolutely sure?</DialogTitle>
                       <DialogDescription>
-                        <form action="" onSubmit={(e)=>{
-                          e.preventDefault()
-                          userEdit(editUser)
-                        }} className="flex flex-col gap-4">
-                          <Input value={editUser.name} onChange={(e) => setEditUser({ ...editUser, name: e.target.value })} name="name" />
-                          <Input value={editUser.job} onChange={(e) => setEditUser({ ...editUser, job: e.target.value })} name="job" />
-                          <DialogClose><button type="submit">Submit</button></DialogClose>
+                        <form onSubmit={(e) => {
+                          e.preventDefault();
+                          dispatch(editUser(editUs))
+                        }} className='flex flex-col gap-4 ' action="">
+                          <Input defaultValue={editUs.name} onChange={(e) => setEditUs({ ...editUs, name: e.target.value })} />
+                          <Input defaultValue={editUs.job} onChange={(e) => setEditUs({ ...editUs, job: e.target.value })} />
+                          <DialogClose><button type='submit'>Submit</button></DialogClose>
                         </form>
                       </DialogDescription>
                     </DialogHeader>
                   </DialogContent>
                 </Dialog>
-              </TableCell>
-            </TableRow>
+              </div>
+            </div>
           ))}
-        </TableBody>
-      </Table>
-    </div>
+        </div>
+      </div>
+    </>
   )
 }
 
