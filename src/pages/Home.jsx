@@ -1,6 +1,17 @@
-import { deleteUser, editUser ,addUser} from '@/reducers/counter'
+
 import React, { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { dataJotai, useTodo, deleteJotai, deleteUser, addUserRedux, addUserJotai } from '@/reducers/counter'
+import { useAtom } from 'jotai'
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import {
   Dialog,
   DialogClose,
@@ -11,70 +22,104 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from '@/components/ui/input'
-const Home = () => {
-  const { data } = useSelector((store) => store.counter)
-  const [editUs, setEditUs] = useState({})
-  const dispatch = useDispatch()
 
-function handleSubmit(e) {
-  e.preventDefault()
-  let newUser={
-    id:Date.now(),
-    name:e.target.name.value,
-    job:e.target.job.value,
+const Home = () => {
+  const { data } = useSelector((store) => store.todo)
+  const [data1] = useAtom(dataJotai)
+  const [, deleteUserJotai] = useAtom(deleteJotai)
+  const [, addUserJotaai] = useAtom(addUserJotai)
+  const dispatch = useDispatch()
+  const { data2, deleteUserZustand, addUserZustand } = useTodo()
+  const [search, setSearch] = useState("")
+  const datagl = []
+
+  for (let i = 0; i < data.length; i++) {
+    for (let j = 0; j < data1.length; j++) {
+      for (let t = 0; t < data2.length; t++) {
+        if (data[i].id === data1[j].id && data1[j].id == data2[t].id) {
+          datagl.push({
+            ...data[i],
+            ...data1[j],
+            ...data2[t]
+          })
+        }
+      }
+    }
   }
-  dispatch(addUser(newUser))
-}
+
+
+  function handleSubmit(e) {
+    e.preventDefault()
+    let idx = Date.now()
+    let newUser1 = {
+      id: idx,
+      name: e.target.name.value
+    }
+    let newUser2 = {
+      id: idx,
+      job: e.target.job.value
+    }
+    let newUser3 = {
+      id: idx,
+      age: e.target.age.value
+    }
+    addUserZustand(newUser3)
+    dispatch(addUserRedux(newUser1))
+    addUserJotaai(newUser2)
+    e.target.reset()
+  }
 
   return (
     <>
-      <Dialog>
-        <DialogTrigger><button className='text-white bg-blue-500 ml-10 p-2'>AddUser</button></DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Are you absolutely sure?</DialogTitle>
-            <DialogDescription>
-              <form onSubmit={handleSubmit} className='flex flex-col gap-4 ' action="">
-                <Input name="name" />
-                <Input name="job" />
-                <DialogClose><button type='submit'>Submit</button></DialogClose>
-              </form>
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-      <div className='bg-white px-6 py-10'>
-        <div className='grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4'>
-          {data.map((el) => (
-            <div key={el.id} className='flex flex-col gap-6 rounded-2xl shadow-2xl p-6'>
-              <div className='flex flex-col gap-1'>
-                <h2 className='text-lg font-medium text-gray-900'>{el.name}</h2>
-                <p className='text-sm text-gray-500'>{el.job}</p>
-              </div>
-              <div className='flex gap-4 text-sm'>
-                <button className='text-gray-300' onClick={() => dispatch(deleteUser(el.id))} >Delete</button>
-                <Dialog>
-                  <DialogTrigger><button className='text-black' onClick={() => setEditUs(el)}>Edit</button></DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Are you absolutely sure?</DialogTitle>
-                      <DialogDescription>
-                        <form onSubmit={(e) => {
-                          e.preventDefault();
-                          dispatch(editUser(editUs))
-                        }} className='flex flex-col gap-4 ' action="">
-                          <Input defaultValue={editUs.name} onChange={(e) => setEditUs({ ...editUs, name: e.target.value })} />
-                          <Input defaultValue={editUs.job} onChange={(e) => setEditUs({ ...editUs, job: e.target.value })} />
-                          <DialogClose><button type='submit'>Submit</button></DialogClose>
-                        </form>
-                      </DialogDescription>
-                    </DialogHeader>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className='p-4'>
+        <Input className="w-[300px] block" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Dialog>
+          <DialogTrigger><button className=' bg-green-500 p-2 text-white mt-2'>Open</button></DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Are you absolutely sure?</DialogTitle>
+              <DialogDescription>
+                <form onSubmit={handleSubmit} className='flex flex-col gap-2' action="">
+                  <Input name="name" />
+                  <Input name="job" />
+                  <Input name="age" />
+                  <DialogClose><button type='submit'>submit</button></DialogClose>
+                </form>
+              </DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+        <Table>
+          <TableCaption>A list of your recent invoices.</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Job</TableHead>
+              <TableHead>Age</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {datagl.filter((el) => el.name.toLowerCase().includes(search.toLowerCase())).map((el) => {
+              return <TableRow key={el.id}>
+                <TableCell>{el.name}</TableCell>
+                <TableCell>{el.job}</TableCell>
+                <TableCell>{el.age}</TableCell>
+                <TableCell>
+                  <button onClick={() => {
+                    deleteUserJotai(el.id)
+                    dispatch(deleteUser(el.id))
+                    deleteUserZustand(el.id)
+                  }}>
+                    Delete
+                  </button>
+                </TableCell>
+              </TableRow>
+
+            })}
+          </TableBody>
+        </Table>
+
       </div>
     </>
   )
